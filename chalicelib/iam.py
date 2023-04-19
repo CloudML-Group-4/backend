@@ -9,10 +9,12 @@ class IAM:
   def create_user(self, username: str):
     try:
       # REF (Boto3 .create_user): https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/iam/client/create_user.html
-      # TO-DO: check list, if in list do something
-      response = self.iam.create_user(Path='', UserName=username)
+      for user in self.iam.list_users(PathPrefix='/dynamodb/modify/')['Users']:   # Using dynamodb so specify path
+        if user['UserName'] == username:
+          self.iam.delete_user(UserName=username)   # If the user already exists and start fresh
+      response = self.iam.create_user(Path='/dynamodb/modify', UserName=username)
       return {
-        'iam-user': response['User']['Username'],
+        'iam_user': response['User']['UserName'],
         'access_id': response['User']['UserId']
       }
     except ClientError as e:
