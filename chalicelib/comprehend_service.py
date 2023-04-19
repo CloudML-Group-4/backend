@@ -19,7 +19,7 @@ class Comprehend:
         result[entity['Type']] = text[entity['BeginOffset']:entity['EndOffset']]
       return result
     except ClientError as e:
-      return {'error': 'Comprehend error while while running detect_pii_entities: ' + e}  
+      return {'error': 'Comprehend error while while running detect_pii_entities: ' + str(e)}  
   
   # detect_phi is the health version of detect_pii, same idea, maybe a little better or worse
   def detect_phi(self, text_line):
@@ -33,5 +33,5 @@ class Comprehend:
         result[entity['Type']] = text[entity['BeginOffset']:entity['EndOffset']]
       return result
     except ClientError as e:
-      return {'error': 'Comprehend Medical error while while running detect_phi: ' + e}  
+      return {'error': 'Comprehend Medical error while while running detect_phi: ' + str(e)}  
   

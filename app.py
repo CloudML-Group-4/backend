@@ -74,7 +74,7 @@ def save_text(image_id):
     'email': request_data['email'],
     'website': request_data['website'],
     'address': request_data['address'],
-    'iam-user': response_iam['iam-user'],
+    'iam-user': response_iam['iam_user'],
     'access-id': response_iam['access_id']
   }
   db.insert_item(item)
@@ -121,8 +121,3 @@ def delete_text(image_id, access_id):
     return db.delete_item(image_id)
   else:
     return {'warning': 'Permission Denied.'}
-
-# Default route from Chalice
-#@app.route('/')
-#def index():
-#    return {'hello': 'world'}

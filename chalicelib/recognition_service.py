@@ -18,7 +18,7 @@ class RecognitionService:
         }
       )
     except ClientError as e:
-      return {'error': 'recognition_service error: ' + e}
+      return {'error': 'recognition_service error: ' + str(e)}
 
     lines = []
     for detection in response['TextDetections']:

@@ -11,7 +11,7 @@ class DB:
     try:
       return self.table.put_item(Item=item)   # REF (Table .put_item): https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb/table/put_item.html
     except ClientError as e:
-      return {'error': 'dynamoDB error while inserting an item: ' + e}
+      return {'error': 'dynamoDB error while inserting an item: ' + str(e)}
 
   def find_id(self, item_id:str):
     result = self.table.get_item(Key={'id': item_id})   # REF (Table .get_item): https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb/table/get_item.html
@@ -48,5 +48,5 @@ class DB:
       )
       return response
     except ClientError as e:
-      return {'error': 'dynamoDB error while updating an item: ' + e}
+      return {'error': 'dynamoDB error while updating an item: ' + str(e)}
     
