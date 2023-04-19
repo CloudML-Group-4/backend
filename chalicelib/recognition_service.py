@@ -9,14 +9,7 @@ class RecognitionService:
   def detect_text(self, file_name):
     # REF (rekog .detect_text): https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/rekognition/client/detect_text.html
     try:
-      response = self.client.detect_text(
-        Image = {
-            'S3Object': {
-              'Bucket': self.bucket_name,
-              'Name': file_name
-          }
-        }
-      )
+      response = self.client.detect_text(Image = {'S3Object': {'Bucket': self.bucket_name,'Name': file_name}});
     except ClientError as e:
       return {'error': 'recognition_service error: ' + str(e)}
 
