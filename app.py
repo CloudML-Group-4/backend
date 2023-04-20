@@ -28,6 +28,7 @@ recognition_service = recognition_service.RecognitionService(storage_service, aw
 # REST Endpoint routes (Planned)
 #######
 
+
 # /images
 # - process file upload, save file to storage
 @app.route('/images', methods=['POST'], cors=True)
@@ -37,6 +38,7 @@ def upload_image():
   file_bytes = base64.b64decode(request_data['filebytes'])   # Get the actual file data
   image_storage = storage_service.upload_file(file_name, file_bytes)
   return image_storage
+
 
 # /images/{image_id}/detect-text
 # - image to text and extract information 
@@ -59,65 +61,62 @@ def detect_text(image_id):
      'website': response_pii['URL'] if 'URL' in response_pii.keys() else None,
      'address': response_pii['ADDRESS'] if 'ADDRESS' in response_pii.keys() else None
   }
+  
 
 # /contacts/{image_id}/save-text
 # - upload an item. Note: Expected input: {name: '', phone: '', email: '', website: '', address: ''}
 @app.route('/contacts/{image_id}/save-text', methods=['POST'], cors=True)
 def save_text(image_id):
   request_data = json.loads(app.current_request.raw_body.decode("utf-8"))   # Bring in the raw request from Chalice
-  print(request_data['name'].replace(' ', '-'))
   response_iam = iam.create_user(request_data['name'].replace(' ', '-'))   # Take care of spaces. .create_user() provides the iam-user and access_id
-  item = {
-    'id': image_id,
+  item = { 
+    'id': str(db.id),
+    'image-id': image_id,
     'username': request_data['name'],
     'phone': request_data['phone'],
     'email': request_data['email'],
     'website': request_data['website'],
     'address': request_data['address'],
     'iam-user': response_iam['iam_user'],
-    'access-id': response_iam['access_id']
+    'access-id': response_iam['access_id'],
+    'imgUrl': request_data['imgUrl']
   }
   db.insert_item(item)
-  return {'access_id': response_iam['access_id']}
+  return {'access_id': response_iam['access_id'], 'id': item['id']}
+
 
 # /contacts/find-text
 # - find an item by name. Note: Expected input: {name: ''}
 @app.route('/contacts/find-text', methods=['POST'], cors=True)
 def find_text():
-  request_data = json.loads(app.current_request.raw_body)   # Bring in the raw request from Chalice
-  return db.find_item[request_data['name']]
+  request_data = json.loads(app.current_request.raw_body.decode("utf-8"))   # Bring in the raw request from Chalice
+  return db.find_item(request_data['name'].lower())
+
+
+@app.route('/contacts/{id}/find-by-id', methods=['GET'], cors=True)
+def find_by_id(id):
+  return db.find_id(id)
+
 
 # /contacts/{image_id}/{access_id}/update-text
 # - update an item. Note: Expected input: {name: '', phone: '', email: '', website: '', address: ''}
 # TODO: hmmmm POST or PUT? change as required please
-@app.route('/contacts/{image_id}/{access_id}/update-text', methods=['PUT'], cors=True)
-def update_text(image_id, access_id):
-  request_data = json.loads(app.current_request.raw_body)   # Bring in the raw request from Chalice
-  item = db.find_id(image_id)
-  if 'warning' in item.keys():   # If we toss a warning from the service code
-    return item
-  if access_id == item['access_id']:   # Check access
-    item = {
-      'id': image_id,
-      'name': request_data['name'],
-      'phone': request_data['phone'],
-      'email': request_data['email'],
-      'website': request_data['website'],
-      'address': request_data['address']
-    }
-    return db.update_item(item)
-  else:
-    return {'warning': 'Permission Denied.'}
+@app.route('/contacts/{id}/update-text', methods=['POST'], cors=True)
+def update_text(id):
+  request_data = json.loads(app.current_request.raw_body.decode("utf-8"))
+  item = { 
+    'username': request_data['name'],
+    'phone': request_data['phone'],
+    'email': request_data['email'],
+    'website': request_data['website'],
+    'address': request_data['address'],
+  }
+  response = db.update_item(id, item)
+  return response["Attributes"]
+
 
 # /contacts/{image_id}/{access_id}/delete-text
 # - delete an item. TODO: DELETE or POST?
-@app.route('/contacts/{image_id}/{access_id}/delete-text', methods=['DELETE'], cors=True)
-def delete_text(image_id, access_id):
-  item = db.find_id(image_id)
-  if 'warning' in item.keys():   # There was a problem so just return the item
-    return item
-  if access_id == item['access_id']:   # Check access
-    iam.delete_user(item['iam-user'])
-    return db.delete_item(image_id)
-  else:
-    return {'warning': 'Permission Denied.'}
+@app.route('/contacts/{id}/delete-text', methods=['DELETE'], cors=True)
+def delete_text(id):
+  db.delete_item(id)
